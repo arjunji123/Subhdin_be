@@ -13,25 +13,56 @@ type VerifyOtpInput = {
   code: string;
 };
 
+type RequestOtpMode = "signup" | "login";
+
 const OTP_EXPIRY_MINUTES = 5;
 
-export const requestOtp = async ({ phone }: RequestOtpInput) => {
-  // Upsert vendor
-  const { data: vendor, error: vendorError } = await supabase
+async function findVendorByPhone(phone: string) {
+  const { data: vendor, error } = await supabase
     .from("Vendor")
-    .upsert({ phone, businessImages: [] }, { onConflict: "phone" })
+    .select("id")
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (error) {
+    throw new AppError("Failed to query vendor", 500);
+  }
+
+  return vendor;
+}
+
+async function createVendor(phone: string) {
+  const { data: vendor, error } = await supabase
+    .from("Vendor")
+    .insert({ phone, businessImages: [] })
     .select("id")
     .single();
 
-  if (vendorError) {
-    throw new AppError("Failed to create/find vendor", 500);
+  if (error) {
+    throw new AppError("Failed to create vendor", 500);
+  }
+
+  return vendor;
+}
+
+export const requestOtp = async (
+  { phone }: RequestOtpInput,
+  mode: RequestOtpMode = "signup",
+) => {
+  let vendor = await findVendorByPhone(phone);
+
+  if (mode === "login") {
+    if (!vendor) {
+      throw new AppError("Vendor not found", 404);
+    }
+  } else if (!vendor) {
+    vendor = await createVendor(phone);
   }
 
   // Generate & send OTP
   const code = await sendOtp(phone);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
-  // Store OTP session
   const { error: sessionError } = await supabase.from("OtpSession").insert({
     phone,
     code,
