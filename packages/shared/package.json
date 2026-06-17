@@ -1,5 +1,5 @@
 {
-  "name": "@shaadihub/shared",
+  "name": "@subhdin/shared",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",

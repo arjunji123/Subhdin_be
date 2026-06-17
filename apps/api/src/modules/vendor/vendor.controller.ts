@@ -4,7 +4,7 @@ import {
   serviceCreateSchema,
   serviceUpdateSchema,
   vendorProfileSchema,
-} from "@shaadihub/shared";
+} from "@subhdin/shared";
 import type { Request, Response } from "express";
 
 import { AppError } from "../../utils/app-error.js";

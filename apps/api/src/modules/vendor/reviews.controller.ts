@@ -1,4 +1,4 @@
-import { reviewSchema } from "@shaadihub/shared";
+import { reviewSchema } from "@subhdin/shared";
 import type { Request, Response } from "express";
 
 import { createReview, listReviews } from "./reviews.service.js";

@@ -1,9 +1,9 @@
 export const swaggerSpec = {
   openapi: "3.0.3",
-  info: { title: "ShaadiHub API", version: "1.0.0", description: "Vendor management backend – phone OTP auth, vendor CRUD, analytics, uploads." },
+  info: { title: "Subhdin API", version: "1.0.0", description: "Vendor management backend – phone OTP auth, vendor CRUD, analytics, uploads." },
   servers: [
     { url: "http://localhost:4000/api", description: "Local" },
-    { url: "https://shaadihub.onrender.com/api", description: "Production (Render)" },
+    { url: "https://subhdin-be.onrender.com/api", description: "Production (Render)" },
   ],
   tags: [
     { name: "Auth", description: "Phone OTP authentication" },

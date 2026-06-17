@@ -1,4 +1,4 @@
-import { analyticsEventSchema } from "@shaadihub/shared";
+import { analyticsEventSchema } from "@subhdin/shared";
 import { Router } from "express";
 
 import { supabase } from "../../lib/supabase.js";

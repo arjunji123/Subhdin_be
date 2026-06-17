@@ -17,7 +17,7 @@ export async function sendOtp(phone: string): Promise<string> {
   }
 
   await client.messages.create({
-    body: `Your ShaadiHub verification code is: ${code}`,
+    body: `Your Subhdin verification code is ${code}. Enter it to complete setup and access your account.`,
     from: env.TWILIO_PHONE_NUMBER,
     to: phone,
   });

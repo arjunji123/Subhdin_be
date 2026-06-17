@@ -1,5 +1,5 @@
 {
-  "name": "@shaadihub/api",
+  "name": "@subhdin/api",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/server.js",
@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@shaadihub/shared": "1.0.0",
+    "@subhdin/shared": "1.0.0",
     "@supabase/supabase-js": "^2.108.2",
     "cloudinary": "^2.5.1",
     "cors": "^2.8.5",

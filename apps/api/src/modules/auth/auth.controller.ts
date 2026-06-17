@@ -1,4 +1,4 @@
-import { requestOtpSchema, verifyOtpSchema } from "@shaadihub/shared";
+import { requestOtpSchema, verifyOtpSchema } from "@subhdin/shared";
 import type { Request, Response } from "express";
 
 import { requestOtp, verifyOtp } from "./auth.service.js";

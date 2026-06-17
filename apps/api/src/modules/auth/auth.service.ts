@@ -5,7 +5,7 @@ import { supabase } from "../../lib/supabase.js";
 import { sendOtp } from "../../services/otp-service.js";
 import { AppError } from "../../utils/app-error.js";
 import { assertSupabase } from "../../utils/supabase-helper.js";
-import type { VendorProfileInput } from "@shaadihub/shared";
+import type { VendorProfileInput } from "@subhdin/shared";
 
 type RequestOtpInput = {
   phone: string;
@@ -67,6 +67,7 @@ export const requestOtp = async (
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
   const { data: sessionData, error: sessionError } = await supabase.from("OtpSession").insert({
+    id: randomUUID(),
     phone,
     code,
     expiresAt,

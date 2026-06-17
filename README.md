@@ -1,4 +1,4 @@
-# ShaadiHub Backend (Milestone 1)
+# Subhdin Backend (Milestone 1)
 
 Professional Node.js + TypeScript backend for Vendor Module.
 

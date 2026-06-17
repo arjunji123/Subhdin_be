@@ -18,7 +18,7 @@ uploadsRouter.get(
     }
 
     const timestamp = Math.floor(Date.now() / 1000);
-    const folder = "shaadihub/vendors";
+    const folder = "subhdin/vendors";
     const toSign = `folder=${folder}&timestamp=${timestamp}${env.CLOUDINARY_API_SECRET}`;
 
     const signature = crypto.createHash("sha1").update(toSign).digest("hex");

@@ -1,4 +1,4 @@
-import type { ReviewInput } from "@shaadihub/shared";
+import type { ReviewInput } from "@subhdin/shared";
 
 import { supabase } from "../../lib/supabase.js";
 import { AppError } from "../../utils/app-error.js";

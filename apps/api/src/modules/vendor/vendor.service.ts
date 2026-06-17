@@ -4,7 +4,7 @@ import type {
   ServiceCreateInput,
   ServiceUpdateInput,
   VendorProfileInput,
-} from "@shaadihub/shared";
+} from "@subhdin/shared";
 
 import { supabase } from "../../lib/supabase.js";
 import { AppError } from "../../utils/app-error.js";
