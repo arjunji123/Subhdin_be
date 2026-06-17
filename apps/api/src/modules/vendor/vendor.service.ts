@@ -72,6 +72,7 @@ export const listServices = async (vendorId: string) => {
 };
 
 export const createService = async (vendorId: string, payload: ServiceCreateInput) => {
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("Service")
     .insert({
@@ -85,6 +86,8 @@ export const createService = async (vendorId: string, payload: ServiceCreateInpu
       galleryImages: payload.galleryImages ?? [],
       videoUrls: payload.videoUrls ?? [],
       highlights: payload.highlights ?? [],
+      createdAt: now,
+      updatedAt: now,
     })
     .select()
     .single();
@@ -135,6 +138,7 @@ export const listOffers = async (vendorId: string) => {
 };
 
 export const createOffer = async (vendorId: string, payload: OfferCreateInput) => {
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("Offer")
     .insert({
@@ -146,6 +150,8 @@ export const createOffer = async (vendorId: string, payload: OfferCreateInput) =
       startDate: new Date(payload.startDate).toISOString(),
       endDate: new Date(payload.endDate).toISOString(),
       isActive: payload.isActive ?? true,
+      createdAt: now,
+      updatedAt: now,
     })
     .select()
     .single();
