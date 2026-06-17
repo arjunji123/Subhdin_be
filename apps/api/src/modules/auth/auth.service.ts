@@ -32,6 +32,7 @@ async function findVendorByPhone(phone: string) {
 }
 
 async function createVendor(phone: string, profile: Partial<VendorProfileInput> = {}) {
+  const now = new Date().toISOString();
   const { data: vendor, error } = await supabase
     .from("Vendor")
     .insert({
@@ -39,6 +40,8 @@ async function createVendor(phone: string, profile: Partial<VendorProfileInput> 
       phone,
       isPhoneVerified: true,
       businessImages: profile.businessImages ?? [],
+      createdAt: now,
+      updatedAt: now,
       ...profile,
     })
     .select("id")
