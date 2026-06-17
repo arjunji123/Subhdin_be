@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const phoneSchema = z.string().regex(/^[0-9]{10,15}$/);
+export const phoneSchema = z.string().regex(/^\+?[0-9]{10,15}$/);
 
 export const requestOtpSchema = z.object({
   phone: phoneSchema,
