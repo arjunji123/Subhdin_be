@@ -118,7 +118,8 @@ export const deleteService = async (vendorId: string, serviceId: string) => {
     .from("Service")
     .delete()
     .eq("id", serviceId)
-    .eq("vendorId", vendorId);
+    .eq("vendorId", vendorId)
+    .select();
 
   assertSupabase(data, error, "Failed to delete service");
   const deletedData = data as unknown;
