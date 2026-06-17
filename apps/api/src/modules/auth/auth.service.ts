@@ -1,9 +1,11 @@
 import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import { env } from "../../config/env.js";
 import { supabase } from "../../lib/supabase.js";
 import { sendOtp } from "../../services/otp-service.js";
 import { AppError } from "../../utils/app-error.js";
 import { assertSupabase } from "../../utils/supabase-helper.js";
+import type { VendorProfileInput } from "@shaadihub/shared";
 
 type RequestOtpInput = {
   phone: string;
@@ -12,7 +14,7 @@ type RequestOtpInput = {
 type VerifyOtpInput = {
   phone: string;
   code: string;
-};
+} & Partial<VendorProfileInput>;
 
 type RequestOtpMode = "signup" | "login";
 
@@ -29,10 +31,16 @@ async function findVendorByPhone(phone: string) {
   return data?.[0] ?? null;
 }
 
-async function createVendor(phone: string) {
+async function createVendor(phone: string, profile: Partial<VendorProfileInput> = {}) {
   const { data: vendor, error } = await supabase
     .from("Vendor")
-    .insert({ phone, businessImages: [] })
+    .insert({
+      id: randomUUID(),
+      phone,
+      isPhoneVerified: true,
+      businessImages: profile.businessImages ?? [],
+      ...profile,
+    })
     .select("id")
     .single();
 
@@ -44,14 +52,14 @@ export const requestOtp = async (
   { phone }: RequestOtpInput,
   mode: RequestOtpMode = "signup",
 ) => {
-  let vendor = await findVendorByPhone(phone);
+  const vendor = await findVendorByPhone(phone);
 
   if (mode === "login") {
     if (!vendor) {
       throw new AppError("Vendor not found", 404);
     }
-  } else if (!vendor) {
-    vendor = await createVendor(phone);
+  } else if (vendor) {
+    throw new AppError("Vendor already exists", 409);
   }
 
   // Generate & send OTP
@@ -62,7 +70,6 @@ export const requestOtp = async (
     phone,
     code,
     expiresAt,
-    vendorId: vendor?.id,
   });
 
   assertSupabase(sessionData, sessionError, "Failed to save OTP session");
@@ -73,7 +80,7 @@ export const requestOtp = async (
   };
 };
 
-export const verifyOtp = async ({ phone, code }: VerifyOtpInput) => {
+export const verifyOtp = async ({ phone, code, ...profile }: VerifyOtpInput) => {
   // Find latest unverified session
   const { data: sessions, error: findError } = await supabase
     .from("OtpSession")
@@ -103,16 +110,38 @@ export const verifyOtp = async ({ phone, code }: VerifyOtpInput) => {
     .eq("id", latestSession.id);
   assertSupabase(verifiedSession, sessionUpdateError, "Failed to mark OTP as verified");
 
-  // Mark vendor phone verified
-  const { data: vendor, error: updateError } = await supabase
-    .from("Vendor")
-    .update({ isPhoneVerified: true })
-    .eq("phone", phone)
-    .select("id")
-    .single();
+  let vendor = await findVendorByPhone(phone);
+  if (!vendor) {
+    vendor = await createVendor(phone, profile);
+  } else {
+    const updatePayload: Partial<VendorProfileInput> & { isPhoneVerified: boolean } = {
+      isPhoneVerified: true,
+    };
 
-  assertSupabase(vendor, updateError, "Failed to verify vendor");
-  if (!vendor) throw new AppError("Vendor not found", 404);
+    if (profile.businessName !== undefined) updatePayload.businessName = profile.businessName;
+    if (profile.ownerName !== undefined) updatePayload.ownerName = profile.ownerName;
+    if (profile.mobileNumber !== undefined) updatePayload.mobileNumber = profile.mobileNumber;
+    if (profile.email !== undefined) updatePayload.email = profile.email;
+    if (profile.address !== undefined) updatePayload.address = profile.address;
+    if (profile.city !== undefined) updatePayload.city = profile.city;
+    if (profile.area !== undefined) updatePayload.area = profile.area;
+    if (profile.mapLocationUrl !== undefined) updatePayload.mapLocationUrl = profile.mapLocationUrl;
+    if (profile.businessImages !== undefined) updatePayload.businessImages = profile.businessImages;
+
+    const { data: updatedVendor, error: updateError } = await supabase
+      .from("Vendor")
+      .update(updatePayload)
+      .eq("id", vendor.id)
+      .select("id")
+      .single();
+
+    assertSupabase(updatedVendor, updateError, "Failed to verify vendor");
+    vendor = updatedVendor;
+  }
+
+  if (!vendor) {
+    throw new AppError("Vendor not found after verify", 500);
+  }
 
   const token = jwt.sign({ vendorId: vendor.id }, env.JWT_SECRET, {
     expiresIn: "7d",

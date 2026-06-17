@@ -6,14 +6,33 @@ export const requestOtpSchema = z.object({
   phone: phoneSchema,
 });
 
-export const verifyOtpSchema = z.object({
-  phone: phoneSchema,
-  code: z.string().length(6),
-});
-
 export const vendorProfileSchema = z.object({
   businessName: z.string().min(2).optional(),
   ownerName: z.string().min(2).optional(),
+  mobileNumber: phoneSchema.optional(),
+  email: z.string().email().optional(),
+  address: z.string().min(3).optional(),
+  city: z.string().min(2).optional(),
+  area: z.string().min(2).optional(),
+  mapLocationUrl: z.string().url().optional(),
+  businessImages: z.array(z.string().url()).optional(),
+});
+
+export const verifyOtpSchema = z.object({
+  phone: phoneSchema,
+  code: z.string().length(6),
+}).merge(vendorProfileSchema);
+
+export const serviceCreateSchema = z.object({
+  category: z.string().min(2),
+  serviceName: z.string().min(2),
+  description: z.string().min(10),
+  price: z.number().positive(),
+  capacity: z.number().int().positive().optional(),
+  galleryImages: z.array(z.string().url()).optional().default([]),
+  videoUrls: z.array(z.string().url()).optional().default([]),
+  highlights: z.array(z.string().min(1)).optional().default([]),
+});
   mobileNumber: phoneSchema.optional(),
   email: z.string().email().optional(),
   address: z.string().min(3).optional(),
