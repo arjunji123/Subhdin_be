@@ -116,7 +116,8 @@ export const deleteService = async (vendorId: string, serviceId: string) => {
     .eq("vendorId", vendorId);
 
   assertSupabase(data, error, "Failed to delete service");
-  if (!Array.isArray(data) || data.length === 0) throw new AppError("Service not found", 404);
+  const deletedData = data as unknown;
+  if (!Array.isArray(deletedData) || deletedData.length === 0) throw new AppError("Service not found", 404);
   return { message: "Service deleted successfully" };
 };
 
@@ -175,7 +176,8 @@ export const deleteOffer = async (vendorId: string, offerId: string) => {
     .eq("vendorId", vendorId);
 
   assertSupabase(data, error, "Failed to delete offer");
-  if (!Array.isArray(data) || data.length === 0) throw new AppError("Offer not found", 404);
+  const deletedData = data as unknown;
+  if (!Array.isArray(deletedData) || deletedData.length === 0) throw new AppError("Offer not found", 404);
   return { message: "Offer deleted successfully" };
 };
 
