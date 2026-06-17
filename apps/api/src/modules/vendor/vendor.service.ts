@@ -183,7 +183,8 @@ export const deleteOffer = async (vendorId: string, offerId: string) => {
     .from("Offer")
     .delete()
     .eq("id", offerId)
-    .eq("vendorId", vendorId);
+    .eq("vendorId", vendorId)
+    .select();
 
   assertSupabase(data, error, "Failed to delete offer");
   const deletedData = data as unknown;
