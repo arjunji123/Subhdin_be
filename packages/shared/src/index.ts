@@ -29,7 +29,7 @@ export const verifyOtpSchema = z.object({
 export const serviceCreateSchema = z.object({
   category: z.string().min(2),
   serviceName: z.string().min(2),
-  description: z.string().min(10),
+  description: z.string().min(3),
   price: z.number().positive(),
   capacity: z.number().int().positive().optional(),
   galleryImages: z.array(z.string().url()).optional().default([]),
