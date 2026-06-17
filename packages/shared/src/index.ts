@@ -33,25 +33,6 @@ export const serviceCreateSchema = z.object({
   videoUrls: z.array(z.string().url()).optional().default([]),
   highlights: z.array(z.string().min(1)).optional().default([]),
 });
-  mobileNumber: phoneSchema.optional(),
-  email: z.string().email().optional(),
-  address: z.string().min(3).optional(),
-  city: z.string().min(2).optional(),
-  area: z.string().min(2).optional(),
-  mapLocationUrl: z.string().url().optional(),
-  businessImages: z.array(z.string().url()).optional(),
-});
-
-export const serviceCreateSchema = z.object({
-  category: z.string().min(2),
-  serviceName: z.string().min(2),
-  description: z.string().min(10),
-  price: z.number().positive(),
-  capacity: z.number().int().positive().optional(),
-  galleryImages: z.array(z.string().url()).optional().default([]),
-  videoUrls: z.array(z.string().url()).optional().default([]),
-  highlights: z.array(z.string().min(1)).optional().default([]),
-});
 
 export const serviceUpdateSchema = serviceCreateSchema.partial();
 
