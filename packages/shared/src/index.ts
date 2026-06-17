@@ -10,8 +10,11 @@ export const vendorProfileSchema = z.object({
   businessName: z.string().min(2).optional(),
   ownerName: z.string().min(2).optional(),
   mobileNumber: phoneSchema.optional(),
-  email: z.string().email().optional(),
-  address: z.string().min(3).optional(),
+  email: z.preprocess((value) => {
+    if (typeof value === "string" && value.trim() === "") return undefined;
+    return value;
+  }, z.string().email().optional()),
+  address: z.string().min(2).optional(),
   city: z.string().min(2).optional(),
   area: z.string().min(2).optional(),
   mapLocationUrl: z.string().url().optional(),
