@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { ReviewInput } from "@subhdin/shared";
 
 import { supabase } from "../../lib/supabase.js";
@@ -19,6 +20,7 @@ export const createReview = async (vendorId: string, payload: ReviewInput, userN
   const { data, error } = await supabase
     .from("Review")
     .insert({
+      id: randomUUID(),
       vendorId,
       userName: userName ?? "Anonymous",
       rating: payload.rating,

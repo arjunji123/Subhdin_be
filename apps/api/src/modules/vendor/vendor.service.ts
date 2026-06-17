@@ -6,6 +6,7 @@ import type {
   VendorProfileInput,
 } from "@subhdin/shared";
 
+import { randomUUID } from "crypto";
 import { supabase } from "../../lib/supabase.js";
 import { AppError } from "../../utils/app-error.js";
 import { assertSupabase } from "../../utils/supabase-helper.js";
@@ -74,6 +75,7 @@ export const createService = async (vendorId: string, payload: ServiceCreateInpu
   const { data, error } = await supabase
     .from("Service")
     .insert({
+      id: randomUUID(),
       vendorId,
       category: payload.category,
       serviceName: payload.serviceName,
@@ -136,6 +138,7 @@ export const createOffer = async (vendorId: string, payload: OfferCreateInput) =
   const { data, error } = await supabase
     .from("Offer")
     .insert({
+      id: randomUUID(),
       vendorId,
       title: payload.title,
       description: payload.description,

@@ -1,5 +1,6 @@
 import { analyticsEventSchema } from "@subhdin/shared";
 import { Router } from "express";
+import { randomUUID } from "crypto";
 
 import { supabase } from "../../lib/supabase.js";
 import { asyncHandler } from "../../utils/async-handler.js";
@@ -15,6 +16,7 @@ analyticsRouter.post(
     const { data, error } = await supabase
       .from("AnalyticsEvent")
       .insert({
+        id: randomUUID(),
         vendorId: payload.vendorId,
         type: payload.type,
         source: payload.source,
