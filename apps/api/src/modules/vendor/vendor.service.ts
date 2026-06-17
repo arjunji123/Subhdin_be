@@ -109,13 +109,14 @@ export const updateService = async (
 };
 
 export const deleteService = async (vendorId: string, serviceId: string) => {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("Service")
     .delete()
     .eq("id", serviceId)
     .eq("vendorId", vendorId);
 
-  if (error) throw new AppError("Service not found or delete failed", 404);
+  assertSupabase(data, error, "Failed to delete service");
+  if (!data?.length) throw new AppError("Service not found", 404);
   return { message: "Service deleted successfully" };
 };
 

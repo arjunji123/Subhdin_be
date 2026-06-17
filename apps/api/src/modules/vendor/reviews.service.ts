@@ -27,6 +27,6 @@ export const createReview = async (vendorId: string, payload: ReviewInput, userN
     .select()
     .single();
 
-  if (error) throw new AppError("Failed to create review", 500);
+  assertSupabase(data, error, "Failed to create review");
   return data;
 };
