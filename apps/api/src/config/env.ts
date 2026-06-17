@@ -16,7 +16,16 @@ if (runtimeEnv.NODE_ENV === "test") {
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
-  SUPABASE_URL: z.string().url(),
+  SUPABASE_URL: z.string().url().refine((value) => {
+    const parsed = new URL(value);
+    return (
+      parsed.protocol === "https:" &&
+      parsed.pathname === "/" &&
+      parsed.hostname.endsWith(".supabase.co")
+    );
+  }, {
+    message: "SUPABASE_URL must be the Supabase project root URL, e.g. https://<project>.supabase.co",
+  }),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   JWT_SECRET: z.string().min(16),
   TWILIO_ACCOUNT_SID: z.string().min(1),
