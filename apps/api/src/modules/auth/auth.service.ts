@@ -18,17 +18,17 @@ type RequestOtpMode = "signup" | "login";
 const OTP_EXPIRY_MINUTES = 5;
 
 async function findVendorByPhone(phone: string) {
-  const { data: vendor, error } = await supabase
+  const { data, error } = await supabase
     .from("Vendor")
     .select("id")
     .eq("phone", phone)
-    .maybeSingle();
+    .limit(1);
 
   if (error) {
-    throw new AppError("Failed to query vendor", 500);
+    throw new AppError(`Failed to query vendor: ${error.message}`, 500);
   }
 
-  return vendor;
+  return data?.[0] ?? null;
 }
 
 async function createVendor(phone: string) {
