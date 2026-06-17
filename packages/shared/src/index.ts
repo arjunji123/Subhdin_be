@@ -26,18 +26,47 @@ export const verifyOtpSchema = z.object({
   code: z.string().length(6),
 }).merge(vendorProfileSchema);
 
+const nonEmptyStringSchema = z.string().trim().min(1);
+const positiveNumberSchema = z.preprocess((value) => {
+  if (typeof value === "string") return Number(value);
+  return value;
+}, z.number().positive());
+const optionalPositiveIntSchema = z.preprocess((value) => {
+  if (typeof value === "string") return Number(value);
+  return value;
+}, z.number().int().positive().optional());
+
+const urlArraySchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() !== "") return [value];
+  return value;
+}, z.array(z.string().url()));
+
+const stringArraySchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() !== "") return [value];
+  return value;
+}, z.array(nonEmptyStringSchema));
+
 export const serviceCreateSchema = z.object({
-  category: z.string().min(2),
-  serviceName: z.string().min(2),
-  description: z.string().min(3),
-  price: z.number().positive(),
-  capacity: z.number().int().positive().optional(),
-  galleryImages: z.array(z.string().url()).optional().default([]),
-  videoUrls: z.array(z.string().url()).optional().default([]),
-  highlights: z.array(z.string().min(1)).optional().default([]),
+  category: nonEmptyStringSchema,
+  serviceName: nonEmptyStringSchema,
+  description: nonEmptyStringSchema,
+  price: positiveNumberSchema,
+  capacity: optionalPositiveIntSchema,
+  galleryImages: urlArraySchema.optional().default([]),
+  videoUrls: urlArraySchema.optional().default([]),
+  highlights: stringArraySchema.optional().default([]),
 });
 
-export const serviceUpdateSchema = serviceCreateSchema.partial();
+export const serviceUpdateSchema = z.object({
+  category: nonEmptyStringSchema.optional(),
+  serviceName: nonEmptyStringSchema.optional(),
+  description: nonEmptyStringSchema.optional(),
+  price: positiveNumberSchema.optional(),
+  capacity: optionalPositiveIntSchema,
+  galleryImages: urlArraySchema.optional(),
+  videoUrls: urlArraySchema.optional(),
+  highlights: stringArraySchema.optional(),
+});
 
 export const offerCreateSchema = z.object({
   title: z.string().min(3),
