@@ -70,7 +70,7 @@ export const serviceUpdateSchema = z.object({
 
 export const offerCreateSchema = z.object({
   title: z.string().min(3),
-  description: z.string().min(5),
+  description: z.string().min(1),
   discountPercent: z.number().int().min(1).max(100),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
