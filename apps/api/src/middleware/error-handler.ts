@@ -17,9 +17,14 @@ export const errorHandler = (
   }
 
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({ message: err.message });
+    console.error("AppError:", err.message, { statusCode: err.statusCode, details: err.details });
+    const response: { message: string; details?: unknown } = { message: err.message };
+    if (process.env.NODE_ENV !== "production" && err.details) {
+      response.details = err.details;
+    }
+    return res.status(err.statusCode).json(response);
   }
 
-  console.error(err);
+  console.error("Unexpected error:", err);
   return res.status(500).json({ message: "Internal server error" });
 };

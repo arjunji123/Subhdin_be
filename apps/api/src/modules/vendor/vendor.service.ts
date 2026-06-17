@@ -8,6 +8,7 @@ import type {
 
 import { supabase } from "../../lib/supabase.js";
 import { AppError } from "../../utils/app-error.js";
+import { assertSupabase } from "../../utils/supabase-helper.js";
 
 export const getVendorMe = async (vendorId: string) => {
   const { data: vendor, error } = await supabase
@@ -16,7 +17,8 @@ export const getVendorMe = async (vendorId: string) => {
     .eq("id", vendorId)
     .single();
 
-  if (error || !vendor) throw new AppError("Vendor not found", 404);
+  assertSupabase(vendor, error, "Failed to fetch vendor profile", 500);
+  if (!vendor) throw new AppError("Vendor not found", 404);
   return vendor;
 };
 
@@ -28,22 +30,32 @@ export const updateVendorMe = async (vendorId: string, payload: VendorProfileInp
     .select()
     .single();
 
-  if (error) throw new AppError("Failed to update vendor", 500);
+  assertSupabase(data, error, "Failed to update vendor", 500);
   return data;
 };
 
 export const deleteVendorMe = async (vendorId: string) => {
   // Cascade delete all related records manually
-  await Promise.all([
+  const deleteOps = [
     supabase.from("AnalyticsEvent").delete().eq("vendorId", vendorId),
     supabase.from("OtpSession").delete().eq("vendorId", vendorId),
     supabase.from("Review").delete().eq("vendorId", vendorId),
     supabase.from("Service").delete().eq("vendorId", vendorId),
     supabase.from("Offer").delete().eq("vendorId", vendorId),
-  ]);
+  ];
+
+  const results = await Promise.all(deleteOps);
+  results.forEach((result, index) => {
+    if (result.error) {
+      throw new AppError(`Failed to delete related records (index ${index}): ${result.error.message}`, 500, {
+        code: result.error.code,
+        details: result.error.details,
+      });
+    }
+  });
 
   const { error } = await supabase.from("Vendor").delete().eq("id", vendorId);
-  if (error) throw new AppError("Failed to delete vendor", 500);
+  if (error) throw new AppError("Failed to delete vendor", 500, { code: error.code, details: error.details });
   return { message: "Account and all related data deleted successfully" };
 };
 
@@ -54,7 +66,7 @@ export const listServices = async (vendorId: string) => {
     .eq("vendorId", vendorId)
     .order("createdAt", { ascending: false });
 
-  if (error) throw new AppError("Failed to fetch services", 500);
+  assertSupabase(data, error, "Failed to fetch services");
   return data;
 };
 
@@ -75,7 +87,7 @@ export const createService = async (vendorId: string, payload: ServiceCreateInpu
     .select()
     .single();
 
-  if (error) throw new AppError("Failed to create service", 500);
+  assertSupabase(data, error, "Failed to create service");
   return data;
 };
 
@@ -92,7 +104,7 @@ export const updateService = async (
     .select()
     .single();
 
-  if (error) throw new AppError("Service not found or update failed", 404);
+  assertSupabase(data, error, "Service not found or update failed", 404);
   return data;
 };
 
@@ -114,7 +126,7 @@ export const listOffers = async (vendorId: string) => {
     .eq("vendorId", vendorId)
     .order("createdAt", { ascending: false });
 
-  if (error) throw new AppError("Failed to fetch offers", 500);
+  assertSupabase(data, error, "Failed to fetch offers");
   return data;
 };
 
@@ -133,7 +145,7 @@ export const createOffer = async (vendorId: string, payload: OfferCreateInput) =
     .select()
     .single();
 
-  if (error) throw new AppError("Failed to create offer", 500);
+  assertSupabase(data, error, "Failed to create offer");
   return data;
 };
 
@@ -150,30 +162,31 @@ export const updateOffer = async (vendorId: string, offerId: string, payload: Of
     .select()
     .single();
 
-  if (error) throw new AppError("Offer not found or update failed", 404);
+  assertSupabase(data, error, "Offer not found or update failed", 404);
   return data;
 };
 
 export const deleteOffer = async (vendorId: string, offerId: string) => {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("Offer")
     .delete()
     .eq("id", offerId)
     .eq("vendorId", vendorId);
 
-  if (error) throw new AppError("Offer not found or delete failed", 404);
+  assertSupabase(data, error, "Failed to delete offer");
+  if (!data?.length) throw new AppError("Offer not found", 404);
   return { message: "Offer deleted successfully" };
 };
 
 export const getDashboard = async (vendorId: string) => {
   const [
-    { count: totalServices },
-    { count: totalOffers },
-    { count: activeOffers },
-    { count: totalViews },
-    { count: totalContactReveals },
-    { count: totalWhatsappClicks },
-    { count: totalLeads },
+    serviceResult,
+    offerResult,
+    activeOfferResult,
+    viewResult,
+    contactRevealResult,
+    whatsappClickResult,
+    leadResult,
   ] = await Promise.all([
     supabase.from("Service").select("*", { count: "exact", head: true }).eq("vendorId", vendorId),
     supabase.from("Offer").select("*", { count: "exact", head: true }).eq("vendorId", vendorId),
@@ -184,13 +197,21 @@ export const getDashboard = async (vendorId: string) => {
     supabase.from("AnalyticsEvent").select("*", { count: "exact", head: true }).eq("vendorId", vendorId).eq("type", "LEAD"),
   ]);
 
+  assertSupabase(serviceResult.data, serviceResult.error, "Failed to fetch dashboard service count");
+  assertSupabase(offerResult.data, offerResult.error, "Failed to fetch dashboard offer count");
+  assertSupabase(activeOfferResult.data, activeOfferResult.error, "Failed to fetch active offer count");
+  assertSupabase(viewResult.data, viewResult.error, "Failed to fetch view count");
+  assertSupabase(contactRevealResult.data, contactRevealResult.error, "Failed to fetch contact reveal count");
+  assertSupabase(whatsappClickResult.data, whatsappClickResult.error, "Failed to fetch whatsapp click count");
+  assertSupabase(leadResult.data, leadResult.error, "Failed to fetch lead count");
+
   return {
-    totalServices: totalServices ?? 0,
-    totalOffers: totalOffers ?? 0,
-    activeOffers: activeOffers ?? 0,
-    totalViews: totalViews ?? 0,
-    totalContactReveals: totalContactReveals ?? 0,
-    totalWhatsappClicks: totalWhatsappClicks ?? 0,
-    totalLeads: totalLeads ?? 0,
+    totalServices: serviceResult.count ?? 0,
+    totalOffers: offerResult.count ?? 0,
+    activeOffers: activeOfferResult.count ?? 0,
+    totalViews: viewResult.count ?? 0,
+    totalContactReveals: contactRevealResult.count ?? 0,
+    totalWhatsappClicks: whatsappClickResult.count ?? 0,
+    totalLeads: leadResult.count ?? 0,
   };
 };

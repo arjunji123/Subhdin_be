@@ -2,6 +2,7 @@ import type { ReviewInput } from "@shaadihub/shared";
 
 import { supabase } from "../../lib/supabase.js";
 import { AppError } from "../../utils/app-error.js";
+import { assertSupabase } from "../../utils/supabase-helper.js";
 
 export const listReviews = async (vendorId: string) => {
   const { data, error } = await supabase
@@ -10,7 +11,7 @@ export const listReviews = async (vendorId: string) => {
     .eq("vendorId", vendorId)
     .order("createdAt", { ascending: false });
 
-  if (error) throw new AppError("Failed to fetch reviews", 500);
+  assertSupabase(data, error, "Failed to fetch reviews");
   return data;
 };
 

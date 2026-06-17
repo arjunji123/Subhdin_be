@@ -3,6 +3,7 @@ import { Router } from "express";
 
 import { supabase } from "../../lib/supabase.js";
 import { asyncHandler } from "../../utils/async-handler.js";
+import { assertSupabase } from "../../utils/supabase-helper.js";
 
 export const analyticsRouter = Router();
 
@@ -22,7 +23,7 @@ analyticsRouter.post(
       .select()
       .single();
 
-    if (error) throw error;
+    assertSupabase(data, error, "Failed to record analytics event");
 
     res.status(201).json(data);
   }),
