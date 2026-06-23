@@ -23,7 +23,14 @@ import {
   updateVendorMe,
 } from "./vendor.service.js";
 
-const getVendorId = (req: Request) => req.auth!.vendorId;
+const getVendorId = (req: Request): string => {
+  const vendorId = req.auth?.vendorId;
+  if (!vendorId) {
+    throw new AppError("Vendor authentication required", 401);
+  }
+  return vendorId;
+};
+
 const requiredParam = (value: string | string[] | undefined, fieldName: string) => {
   if (!value || Array.isArray(value)) {
     throw new AppError(`${fieldName} is required`, 400);

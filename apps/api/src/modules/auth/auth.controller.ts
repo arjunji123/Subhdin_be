@@ -5,13 +5,7 @@ import { requestOtp, verifyOtp } from "./auth.service.js";
 
 export const requestOtpHandler = async (req: Request, res: Response) => {
   const payload = requestOtpSchema.parse(req.body);
-  const result = await requestOtp(payload, "signup");
-  return res.status(200).json(result);
-};
-
-export const loginRequestOtpHandler = async (req: Request, res: Response) => {
-  const payload = requestOtpSchema.parse(req.body);
-  const result = await requestOtp(payload, "login");
+  const result = await requestOtp(payload);
   return res.status(200).json(result);
 };
 

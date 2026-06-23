@@ -4,7 +4,9 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 
 type AuthPayload = {
-  vendorId: string;
+  vendorId?: string;
+  userId?: string;
+  role?: "user" | "vendor";
 };
 
 declare module "express-serve-static-core" {
@@ -26,7 +28,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 
   try {
     const payload = jwt.verify(token, env.JWT_SECRET) as unknown as AuthPayload;
-    if (!payload.vendorId) {
+    if (!payload.vendorId && !payload.userId) {
       return res.status(401).json({ message: "Invalid token" });
     }
     req.auth = payload;

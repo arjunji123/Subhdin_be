@@ -5,7 +5,7 @@ import { supabase } from "../../lib/supabase.js";
 import { sendOtp } from "../../services/otp-service.js";
 import { AppError } from "../../utils/app-error.js";
 import { assertSupabase } from "../../utils/supabase-helper.js";
-import type { VendorProfileInput } from "@subhdin/shared";
+import type { UserProfileInput, VendorProfileInput } from "@subhdin/shared";
 
 type RequestOtpInput = {
   phone: string;
@@ -14,20 +14,31 @@ type RequestOtpInput = {
 type VerifyOtpInput = {
   phone: string;
   code: string;
-} & Partial<VendorProfileInput>;
-
-type RequestOtpMode = "signup" | "login";
+  role?: "user" | "vendor";
+} & Partial<VendorProfileInput> &
+  Partial<UserProfileInput>;
 
 const OTP_EXPIRY_MINUTES = 5;
 
 async function findVendorByPhone(phone: string) {
   const { data, error } = await supabase
     .from("Vendor")
-    .select("id")
+    .select("*")
     .eq("phone", phone)
     .limit(1);
 
   assertSupabase(data, error, "Failed to query vendor");
+  return data?.[0] ?? null;
+}
+
+async function findUserByPhone(phone: string) {
+  const { data, error } = await supabase
+    .from("User")
+    .select("*")
+    .eq("phone", phone)
+    .limit(1);
+
+  assertSupabase(data, error, "Failed to query user");
   return data?.[0] ?? null;
 }
 
@@ -44,28 +55,33 @@ async function createVendor(phone: string, profile: Partial<VendorProfileInput> 
       updatedAt: now,
       ...profile,
     })
-    .select("id")
+    .select("*")
     .single();
 
   assertSupabase(vendor, error, "Failed to create vendor");
   return vendor;
 }
 
-export const requestOtp = async (
-  { phone }: RequestOtpInput,
-  mode: RequestOtpMode = "signup",
-) => {
-  const vendor = await findVendorByPhone(phone);
+async function createUser(phone: string, profile: Partial<UserProfileInput> = {}) {
+  const now = new Date().toISOString();
+  const { data: user, error } = await supabase
+    .from("User")
+    .insert({
+      id: randomUUID(),
+      phone,
+      isPhoneVerified: true,
+      createdAt: now,
+      updatedAt: now,
+      ...profile,
+    })
+    .select("*")
+    .single();
 
-  if (mode === "login") {
-    if (!vendor) {
-      throw new AppError("Vendor not found", 404);
-    }
-  } else if (vendor) {
-    throw new AppError("Vendor already exists", 409);
-  }
+  assertSupabase(user, error, "Failed to create user");
+  return user;
+}
 
-  // Generate & send OTP
+export const requestOtp = async ({ phone }: RequestOtpInput) => {
   const code = await sendOtp(phone);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
@@ -84,8 +100,7 @@ export const requestOtp = async (
   };
 };
 
-export const verifyOtp = async ({ phone, code, ...profile }: VerifyOtpInput) => {
-  // Find latest unverified session
+export const verifyOtp = async ({ phone, code, role, ...profile }: VerifyOtpInput) => {
   const { data: sessions, error: findError } = await supabase
     .from("OtpSession")
     .select("*")
@@ -107,17 +122,30 @@ export const verifyOtp = async ({ phone, code, ...profile }: VerifyOtpInput) => 
     throw new AppError("Invalid OTP", 401);
   }
 
-  // Mark session verified
   const { data: verifiedSession, error: sessionUpdateError } = await supabase
     .from("OtpSession")
     .update({ verified: true })
     .eq("id", latestSession.id);
   assertSupabase(verifiedSession, sessionUpdateError, "Failed to mark OTP as verified");
 
-  let vendor = await findVendorByPhone(phone);
-  if (!vendor) {
-    vendor = await createVendor(phone, profile);
-  } else {
+  const vendor = await findVendorByPhone(phone);
+  const user = await findUserByPhone(phone);
+
+  let selectedRole = role;
+  if (!selectedRole) {
+    if (vendor && !user) selectedRole = "vendor";
+    else if (user && !vendor) selectedRole = "user";
+    else if (vendor && user) {
+      throw new AppError("Multiple accounts found for this phone. Please specify role.", 400);
+    } else {
+      throw new AppError("Role is required for new registration", 400);
+    }
+  }
+
+  if (selectedRole === "vendor") {
+    const account = vendor ?? await createVendor(phone, profile as Partial<VendorProfileInput>);
+    if (!account) throw new AppError("Vendor not found after verify", 500);
+
     const updatePayload: Partial<VendorProfileInput> & { isPhoneVerified: boolean } = {
       isPhoneVerified: true,
     };
@@ -135,24 +163,61 @@ export const verifyOtp = async ({ phone, code, ...profile }: VerifyOtpInput) => 
     const { data: updatedVendor, error: updateError } = await supabase
       .from("Vendor")
       .update(updatePayload)
-      .eq("id", vendor.id)
-      .select("id")
+      .eq("id", account.id)
+      .select("*")
       .single();
 
-    assertSupabase(updatedVendor, updateError, "Failed to verify vendor");
-    vendor = updatedVendor;
+    assertSupabase(updatedVendor, updateError, "Failed to update vendor");
+
+    const token = jwt.sign({ vendorId: updatedVendor.id, role: "vendor" }, env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    return {
+      message: "OTP verified",
+      token,
+      user: {
+        id: updatedVendor.id,
+        role: "vendor",
+        name: updatedVendor.businessName ?? updatedVendor.ownerName ?? "",
+        isProfileComplete: Boolean(updatedVendor.businessName || updatedVendor.ownerName),
+      },
+    };
   }
 
-  if (!vendor) {
-    throw new AppError("Vendor not found after verify", 500);
-  }
+  const account = user ?? await createUser(phone, profile as Partial<UserProfileInput>);
+  if (!account) throw new AppError("User not found after verify", 500);
 
-  const token = jwt.sign({ vendorId: vendor.id }, env.JWT_SECRET, {
+  const updatePayload: Partial<UserProfileInput> & { isPhoneVerified: boolean } = {
+    isPhoneVerified: true,
+  };
+
+  if (profile.fullName !== undefined) updatePayload.fullName = profile.fullName;
+  if (profile.email !== undefined) updatePayload.email = profile.email;
+  if (profile.city !== undefined) updatePayload.city = profile.city;
+  if (profile.area !== undefined) updatePayload.area = profile.area;
+
+  const { data: updatedUser, error: updateError } = await supabase
+    .from("User")
+    .update(updatePayload)
+    .eq("id", account.id)
+    .select("*")
+    .single();
+
+  assertSupabase(updatedUser, updateError, "Failed to update user");
+
+  const token = jwt.sign({ userId: updatedUser.id, role: "user" }, env.JWT_SECRET, {
     expiresIn: "7d",
   });
 
   return {
     message: "OTP verified",
     token,
+    user: {
+      id: updatedUser.id,
+      role: "user",
+      name: updatedUser.fullName ?? "",
+      isProfileComplete: Boolean(updatedUser.fullName),
+    },
   };
 };

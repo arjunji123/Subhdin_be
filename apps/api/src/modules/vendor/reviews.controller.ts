@@ -1,9 +1,16 @@
 import { reviewSchema } from "@subhdin/shared";
 import type { Request, Response } from "express";
 
+import { AppError } from "../../utils/app-error.js";
 import { createReview, listReviews } from "./reviews.service.js";
 
-const getVendorId = (req: Request) => req.auth!.vendorId;
+const getVendorId = (req: Request): string => {
+  const vendorId = req.auth?.vendorId;
+  if (!vendorId) {
+    throw new AppError("Vendor authentication required", 401);
+  }
+  return vendorId;
+};
 
 export const listReviewsHandler = async (req: Request, res: Response) => {
   const reviews = await listReviews(getVendorId(req));

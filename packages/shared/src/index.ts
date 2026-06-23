@@ -6,14 +6,16 @@ export const requestOtpSchema = z.object({
   phone: phoneSchema,
 });
 
+const emailSchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  return value;
+}, z.string().email().optional());
+
 export const vendorProfileSchema = z.object({
   businessName: z.string().min(2).optional(),
   ownerName: z.string().min(2).optional(),
   mobileNumber: phoneSchema.optional(),
-  email: z.preprocess((value) => {
-    if (typeof value === "string" && value.trim() === "") return undefined;
-    return value;
-  }, z.string().email().optional()),
+  email: emailSchema,
   address: z.string().min(2).optional(),
   city: z.string().min(2).optional(),
   area: z.string().min(2).optional(),
@@ -21,10 +23,18 @@ export const vendorProfileSchema = z.object({
   businessImages: z.array(z.string().url()).optional(),
 });
 
+export const userProfileSchema = z.object({
+  fullName: z.string().min(2).optional(),
+  email: emailSchema,
+  city: z.string().min(2).optional(),
+  area: z.string().min(2).optional(),
+});
+
 export const verifyOtpSchema = z.object({
   phone: phoneSchema,
   code: z.string().length(6),
-}).merge(vendorProfileSchema);
+  role: z.enum(["user", "vendor"]).optional(),
+}).merge(vendorProfileSchema).merge(userProfileSchema);
 
 const nonEmptyStringSchema = z.string().trim().min(1);
 const positiveNumberSchema = z.preprocess((value) => {
@@ -94,6 +104,7 @@ export const analyticsEventSchema = z.object({
 export type RequestOtpInput = z.infer<typeof requestOtpSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type VendorProfileInput = z.infer<typeof vendorProfileSchema>;
+export type UserProfileInput = z.infer<typeof userProfileSchema>;
 export type ServiceCreateInput = z.infer<typeof serviceCreateSchema>;
 export type ServiceUpdateInput = z.infer<typeof serviceUpdateSchema>;
 export type OfferCreateInput = z.infer<typeof offerCreateSchema>;

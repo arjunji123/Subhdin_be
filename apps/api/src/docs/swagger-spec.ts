@@ -14,9 +14,8 @@ export const swaggerSpec = {
   components: { securitySchemes: { bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" } } },
   paths: {
     "/health": { get: { tags: ["Auth"], summary: "Health check", responses: { 200: { description: "OK" } } } },
-    "/auth/request-otp": { post: { tags: ["Auth"], summary: "Request OTP", description: "Signup and send OTP for a new or existing vendor phone number.", responses: { 200: { description: "OTP sent" } } } },
-    "/auth/login-request-otp": { post: { tags: ["Auth"], summary: "Login request OTP", description: "Send OTP only if the vendor phone already exists.", responses: { 200: { description: "OTP sent" }, 404: { description: "Vendor not found" } } } },
-    "/auth/verify-otp": { post: { tags: ["Auth"], summary: "Verify OTP & get JWT", responses: { 200: { description: "Token returned" } } } },
+    "/auth/request-otp": { post: { tags: ["Auth"], summary: "Request OTP", description: "Send OTP for vendor or user registration/login. Works for new or existing phone numbers.", responses: { 200: { description: "OTP sent" } } } },
+    "/auth/verify-otp": { post: { tags: ["Auth"], summary: "Verify OTP & get JWT", description: "Verify OTP and get JWT token. Supports both vendor and user roles.", responses: { 200: { description: "Token returned" } } } },
     "/vendor/me": {
       get: { tags: ["Vendor"], summary: "Get vendor profile", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } },
       put: { tags: ["Vendor"], summary: "Update vendor profile", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } },
