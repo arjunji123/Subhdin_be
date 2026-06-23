@@ -11,23 +11,38 @@ const emailSchema = z.preprocess((value) => {
   return value;
 }, z.string().email().optional());
 
+const optionalStringSchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  return value;
+}, z.string().min(2).optional());
+
+const optionalPhoneSchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  return value;
+}, phoneSchema.optional());
+
+const optionalUrlSchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim() === "") return undefined;
+  return value;
+}, z.string().url().optional());
+
 export const vendorProfileSchema = z.object({
-  businessName: z.string().min(2).optional(),
-  ownerName: z.string().min(2).optional(),
-  mobileNumber: phoneSchema.optional(),
+  businessName: optionalStringSchema,
+  ownerName: optionalStringSchema,
+  mobileNumber: optionalPhoneSchema,
   email: emailSchema,
-  address: z.string().min(2).optional(),
-  city: z.string().min(2).optional(),
-  area: z.string().min(2).optional(),
-  mapLocationUrl: z.string().url().optional(),
+  address: optionalStringSchema,
+  city: optionalStringSchema,
+  area: optionalStringSchema,
+  mapLocationUrl: optionalUrlSchema,
   businessImages: z.array(z.string().url()).optional(),
 });
 
 export const userProfileSchema = z.object({
-  fullName: z.string().min(2).optional(),
+  fullName: optionalStringSchema,
   email: emailSchema,
-  city: z.string().min(2).optional(),
-  area: z.string().min(2).optional(),
+  city: optionalStringSchema,
+  area: optionalStringSchema,
 });
 
 export const verifyOtpSchema = z.object({
