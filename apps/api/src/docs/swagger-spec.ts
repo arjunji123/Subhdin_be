@@ -8,6 +8,7 @@ export const swaggerSpec = {
   tags: [
     { name: "Auth", description: "Phone OTP authentication" },
     { name: "Vendor", description: "Vendor profile, services, offers, reviews, dashboard" },
+    { name: "User", description: "User/Customer profile management" },
     { name: "Analytics", description: "User event tracking" },
     { name: "Uploads", description: "Cloudinary signed uploads" },
   ],
@@ -42,6 +43,11 @@ export const swaggerSpec = {
       post: { tags: ["Vendor"], summary: "Create review", security: [{ bearerAuth: [] }], responses: { 201: { description: "Created" } } },
     },
     "/vendor/dashboard": { get: { tags: ["Vendor"], summary: "Dashboard stats", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } } },
+    "/user/me": {
+      get: { tags: ["User"], summary: "Get user profile", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } },
+      put: { tags: ["User"], summary: "Update user profile", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } },
+      delete: { tags: ["User"], summary: "Delete user account", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } },
+    },
     "/analytics/events": { post: { tags: ["Analytics"], summary: "Track event", responses: { 201: { description: "Recorded" } } } },
     "/uploads/signature": { get: { tags: ["Uploads"], summary: "Get Cloudinary upload signature", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } } },
   },
