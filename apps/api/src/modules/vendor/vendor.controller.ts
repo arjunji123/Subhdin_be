@@ -57,8 +57,9 @@ export const deleteVendorMeHandler = async (req: Request, res: Response) => {
   return res.status(200).json(result);
 };
 
-export const listPublicVendorsHandler = async (_req: Request, res: Response) => {
-  const vendors = await listPublicVendors();
+export const listPublicVendorsHandler = async (req: Request, res: Response) => {
+  const category = typeof req.query.category === "string" ? req.query.category.trim() : undefined;
+  const vendors = await listPublicVendors(category);
   return res.status(200).json(vendors);
 };
 

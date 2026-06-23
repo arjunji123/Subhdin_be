@@ -23,20 +23,36 @@ export const getVendorMe = async (vendorId: string) => {
   return vendor;
 };
 
-export const listPublicVendors = async () => {
-  const { data, error } = await supabase
+export const listPublicVendors = async (category?: string) => {
+  let vendorQuery = supabase
     .from("Vendor")
     .select("*")
-    .eq("status", "APPROVED")
+    .in("status", ["APPROVED", "PENDING"])
     .order("createdAt", { ascending: false });
 
+  if (category) {
+    const { data: matchingServices, error: servicesError } = await supabase
+      .from("Service")
+      .select("vendorId")
+      .eq("category", category)
+      .order("createdAt", { ascending: false });
+
+    assertSupabase(matchingServices, servicesError, "Failed to fetch matching services");
+
+    const vendorIds = [...new Set((matchingServices ?? []).map((service) => service.vendorId))];
+    if (vendorIds.length === 0) return [];
+
+    vendorQuery = vendorQuery.in("id", vendorIds);
+  }
+
+  const { data, error } = await vendorQuery;
   assertSupabase(data, error, "Failed to fetch vendor list");
   return data;
 };
 
 export const getPublicVendorDetail = async (vendorId: string) => {
   const [vendorResult, servicesResult, reviewsResult] = await Promise.all([
-    supabase.from("Vendor").select("*").eq("id", vendorId).eq("status", "APPROVED").single(),
+    supabase.from("Vendor").select("*").eq("id", vendorId).in("status", ["APPROVED", "PENDING"]).single(),
     supabase.from("Service").select("*").eq("vendorId", vendorId).order("createdAt", { ascending: false }),
     supabase.from("Review").select("id, userName, rating, comment, createdAt").eq("vendorId", vendorId).order("createdAt", { ascending: false }),
   ]);
