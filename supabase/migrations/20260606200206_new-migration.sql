@@ -112,6 +112,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop triggers if they exist (makes migration idempotent)
+DROP TRIGGER IF EXISTS vendor_updatedAt ON "Vendor";
+DROP TRIGGER IF EXISTS user_updatedAt ON "User";
+DROP TRIGGER IF EXISTS service_updatedAt ON "Service";
+DROP TRIGGER IF EXISTS offer_updatedAt ON "Offer";
+
+-- Create triggers
 CREATE TRIGGER vendor_updatedAt BEFORE UPDATE ON "Vendor" FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 CREATE TRIGGER user_updatedAt BEFORE UPDATE ON "User" FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 CREATE TRIGGER service_updatedAt BEFORE UPDATE ON "Service" FOR EACH ROW EXECUTE FUNCTION update_timestamp();
