@@ -42,7 +42,32 @@ async function findUserByPhone(phone: string) {
   return data?.[0] ?? null;
 }
 
-async function createVendor(phone: string, profile: Partial<VendorProfileInput> = {}) {
+type AuthProfilePayload = Partial<VendorProfileInput> & Partial<UserProfileInput>;
+
+function buildVendorProfilePayload(profile: AuthProfilePayload): Partial<VendorProfileInput> {
+  const payload: Partial<VendorProfileInput> = {};
+  if (profile.businessName !== undefined) payload.businessName = profile.businessName;
+  if (profile.ownerName !== undefined) payload.ownerName = profile.ownerName;
+  if (profile.mobileNumber !== undefined) payload.mobileNumber = profile.mobileNumber;
+  if (profile.email !== undefined) payload.email = profile.email;
+  if (profile.address !== undefined) payload.address = profile.address;
+  if (profile.city !== undefined) payload.city = profile.city;
+  if (profile.area !== undefined) payload.area = profile.area;
+  if (profile.mapLocationUrl !== undefined) payload.mapLocationUrl = profile.mapLocationUrl;
+  if (profile.businessImages !== undefined) payload.businessImages = profile.businessImages;
+  return payload;
+}
+
+function buildUserProfilePayload(profile: AuthProfilePayload): Partial<UserProfileInput> {
+  const payload: Partial<UserProfileInput> = {};
+  if (profile.fullName !== undefined) payload.fullName = profile.fullName;
+  if (profile.email !== undefined) payload.email = profile.email;
+  if (profile.city !== undefined) payload.city = profile.city;
+  if (profile.area !== undefined) payload.area = profile.area;
+  return payload;
+}
+
+async function createVendor(phone: string, profile: AuthProfilePayload = {}) {
   const now = new Date().toISOString();
   const { data: vendor, error } = await supabase
     .from("Vendor")
@@ -50,10 +75,9 @@ async function createVendor(phone: string, profile: Partial<VendorProfileInput> 
       id: randomUUID(),
       phone,
       isPhoneVerified: true,
-      businessImages: profile.businessImages ?? [],
       createdAt: now,
       updatedAt: now,
-      ...profile,
+      ...buildVendorProfilePayload(profile),
     })
     .select("*")
     .single();
@@ -62,7 +86,7 @@ async function createVendor(phone: string, profile: Partial<VendorProfileInput> 
   return vendor;
 }
 
-async function createUser(phone: string, profile: Partial<UserProfileInput> = {}) {
+async function createUser(phone: string, profile: AuthProfilePayload = {}) {
   const now = new Date().toISOString();
   const { data: user, error } = await supabase
     .from("User")
@@ -72,7 +96,7 @@ async function createUser(phone: string, profile: Partial<UserProfileInput> = {}
       isPhoneVerified: true,
       createdAt: now,
       updatedAt: now,
-      ...profile,
+      ...buildUserProfilePayload(profile),
     })
     .select("*")
     .single();
