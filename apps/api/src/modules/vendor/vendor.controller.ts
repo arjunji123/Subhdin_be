@@ -15,6 +15,7 @@ import {
   deleteService,
   deleteVendorMe,
   getDashboard,
+  getPublicVendorDetail,
   getVendorMe,
   listOffers,
   listPublicVendors,
@@ -59,6 +60,12 @@ export const deleteVendorMeHandler = async (req: Request, res: Response) => {
 export const listPublicVendorsHandler = async (_req: Request, res: Response) => {
   const vendors = await listPublicVendors();
   return res.status(200).json(vendors);
+};
+
+export const getPublicVendorDetailHandler = async (req: Request, res: Response) => {
+  const vendorId = requiredParam(req.params.vendorId, "vendorId");
+  const detail = await getPublicVendorDetail(vendorId);
+  return res.status(200).json(detail);
 };
 
 export const listVendorServicesHandler = async (req: Request, res: Response) => {

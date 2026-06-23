@@ -9,6 +9,7 @@ import {
   deleteOfferHandler,
   deleteServiceHandler,
   deleteVendorMeHandler,
+  getPublicVendorDetailHandler,
   getVendorMeHandler,
   listOffersHandler,
   listPublicVendorsHandler,
@@ -36,6 +37,7 @@ vendorRouter.patch("/services/:serviceId", asyncHandler(updateServiceHandler));
 vendorRouter.delete("/services/:serviceId", asyncHandler(deleteServiceHandler));
 
 vendorPublicRouter.get("/", asyncHandler(listPublicVendorsHandler));
+vendorPublicRouter.get("/:vendorId", asyncHandler(getPublicVendorDetailHandler));
 vendorPublicRouter.get("/:vendorId/services", asyncHandler(listVendorServicesHandler));
 
 vendorRouter.get("/offers", asyncHandler(listOffersHandler));

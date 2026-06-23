@@ -34,6 +34,26 @@ export const listPublicVendors = async () => {
   return data;
 };
 
+export const getPublicVendorDetail = async (vendorId: string) => {
+  const [vendorResult, servicesResult, reviewsResult] = await Promise.all([
+    supabase.from("Vendor").select("*").eq("id", vendorId).eq("status", "APPROVED").single(),
+    supabase.from("Service").select("*").eq("vendorId", vendorId).order("createdAt", { ascending: false }),
+    supabase.from("Review").select("id, userName, rating, comment, createdAt").eq("vendorId", vendorId).order("createdAt", { ascending: false }),
+  ]);
+
+  assertSupabase(vendorResult.data, vendorResult.error, "Failed to fetch vendor detail");
+  assertSupabase(servicesResult.data, servicesResult.error, "Failed to fetch vendor services");
+  assertSupabase(reviewsResult.data, reviewsResult.error, "Failed to fetch vendor reviews");
+
+  if (!vendorResult.data) throw new AppError("Vendor not found", 404);
+
+  return {
+    vendor: vendorResult.data,
+    services: servicesResult.data ?? [],
+    reviews: reviewsResult.data ?? [],
+  };
+};
+
 export const listVendorServices = async (vendorId: string) => {
   const { data, error } = await supabase
     .from("Service")

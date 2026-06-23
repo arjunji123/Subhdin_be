@@ -46,8 +46,11 @@ export const swaggerSpec = {
     "/vendors": {
       get: { tags: ["Vendor"], summary: "List public vendors", description: "Return all approved vendors with full profile details.", responses: { 200: { description: "OK" } } },
     },
+    "/vendors/{vendorId}": {
+      get: { tags: ["Vendor"], summary: "Get vendor detail", description: "Return vendor profile, services, and reviews together.", parameters: [{ name: "vendorId", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "OK" } } },
+    },
     "/vendors/{vendorId}/services": {
-      get: { tags: ["Vendor"], summary: "List vendor services", description: "Return all services created by a public vendor.", security: [], parameters: [{ name: "vendorId", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "OK" } } },
+      get: { tags: ["Vendor"], summary: "List vendor services", description: "Return all services created by a public vendor.", parameters: [{ name: "vendorId", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "OK" } } },
     },
     "/user/me": {
       get: { tags: ["User"], summary: "Get user profile", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } },
