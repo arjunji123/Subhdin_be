@@ -17,7 +17,9 @@ import {
   getDashboard,
   getVendorMe,
   listOffers,
+  listPublicVendors,
   listServices,
+  listVendorServices,
   updateOffer,
   updateService,
   updateVendorMe,
@@ -52,6 +54,17 @@ export const updateVendorMeHandler = async (req: Request, res: Response) => {
 export const deleteVendorMeHandler = async (req: Request, res: Response) => {
   const result = await deleteVendorMe(getVendorId(req));
   return res.status(200).json(result);
+};
+
+export const listPublicVendorsHandler = async (_req: Request, res: Response) => {
+  const vendors = await listPublicVendors();
+  return res.status(200).json(vendors);
+};
+
+export const listVendorServicesHandler = async (req: Request, res: Response) => {
+  const vendorId = requiredParam(req.params.vendorId, "vendorId");
+  const services = await listVendorServices(vendorId);
+  return res.status(200).json(services);
 };
 
 export const listServicesHandler = async (req: Request, res: Response) => {

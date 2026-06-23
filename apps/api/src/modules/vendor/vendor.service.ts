@@ -23,6 +23,28 @@ export const getVendorMe = async (vendorId: string) => {
   return vendor;
 };
 
+export const listPublicVendors = async () => {
+  const { data, error } = await supabase
+    .from("Vendor")
+    .select("*")
+    .eq("status", "APPROVED")
+    .order("createdAt", { ascending: false });
+
+  assertSupabase(data, error, "Failed to fetch vendor list");
+  return data;
+};
+
+export const listVendorServices = async (vendorId: string) => {
+  const { data, error } = await supabase
+    .from("Service")
+    .select("*")
+    .eq("vendorId", vendorId)
+    .order("createdAt", { ascending: false });
+
+  assertSupabase(data, error, "Failed to fetch vendor services");
+  return data;
+};
+
 export const updateVendorMe = async (vendorId: string, payload: VendorProfileInput) => {
   const { data, error } = await supabase
     .from("Vendor")
