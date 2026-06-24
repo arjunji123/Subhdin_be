@@ -59,7 +59,23 @@ export const deleteVendorMeHandler = async (req: Request, res: Response) => {
 
 export const listPublicVendorsHandler = async (req: Request, res: Response) => {
   const category = typeof req.query.category === "string" ? req.query.category.trim() : undefined;
-  const vendors = await listPublicVendors(category);
+  const search = typeof req.query.search === "string" ? req.query.search.trim() : undefined;
+  const location = typeof req.query.location === "string" ? req.query.location.trim() : undefined;
+  const budget = typeof req.query.budget === "string" ? Number(req.query.budget) : undefined;
+  const minPrice = typeof req.query.minPrice === "string" ? Number(req.query.minPrice) : undefined;
+  const maxPrice = typeof req.query.maxPrice === "string" ? Number(req.query.maxPrice) : undefined;
+  const sortBy = typeof req.query.sortBy === "string" ? req.query.sortBy.trim() : undefined;
+
+  const vendors = await listPublicVendors({
+    category,
+    search,
+    location,
+    budget,
+    minPrice,
+    maxPrice,
+    sortBy,
+  });
+
   return res.status(200).json(vendors);
 };
 

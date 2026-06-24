@@ -23,31 +23,148 @@ export const getVendorMe = async (vendorId: string) => {
   return vendor;
 };
 
-export const listPublicVendors = async (category?: string) => {
+type PublicVendorFilters = {
+  category?: string;
+  search?: string;
+  location?: string;
+  budget?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: string;
+};
+
+const normalize = (value?: string) => value?.trim().toLowerCase() ?? "";
+
+export const listPublicVendors = async (filters: PublicVendorFilters = {}) => {
+  const { category, search, location, budget, minPrice, maxPrice, sortBy } = filters;
+
   let vendorQuery = supabase
     .from("Vendor")
     .select("*")
     .in("status", ["APPROVED", "PENDING"])
     .order("createdAt", { ascending: false });
 
+  let vendorIds: string[] | undefined;
+
   if (category) {
     const { data: matchingServices, error: servicesError } = await supabase
       .from("Service")
       .select("vendorId")
-      .eq("category", category)
+      .ilike("category", `%${category}%`)
       .order("createdAt", { ascending: false });
 
     assertSupabase(matchingServices, servicesError, "Failed to fetch matching services");
-
-    const vendorIds = [...new Set((matchingServices ?? []).map((service) => service.vendorId))];
+    vendorIds = [...new Set((matchingServices ?? []).map((service) => service.vendorId))];
     if (vendorIds.length === 0) return [];
+  }
 
+  if (vendorIds?.length) {
     vendorQuery = vendorQuery.in("id", vendorIds);
   }
 
-  const { data, error } = await vendorQuery;
-  assertSupabase(data, error, "Failed to fetch vendor list");
-  return data;
+  const { data: vendors, error } = await vendorQuery;
+  assertSupabase(vendors, error, "Failed to fetch vendor list");
+
+  const vendorList = (vendors ?? []).map((vendor) => ({ ...vendor }));
+  if (!vendorList.length) return [];
+
+  const vendorIdsForDetails = vendorList.map((vendor) => vendor.id);
+  const [servicesResult, reviewsResult] = await Promise.all([
+    supabase.from("Service").select("*").in("vendorId", vendorIdsForDetails),
+    supabase.from("Review").select("id, userName, rating, comment, createdAt").in("vendorId", vendorIdsForDetails),
+  ]);
+
+  assertSupabase(servicesResult.data, servicesResult.error, "Failed to fetch vendor services");
+  assertSupabase(reviewsResult.data, reviewsResult.error, "Failed to fetch vendor reviews");
+
+  const servicesByVendor = new Map<string, Array<Record<string, unknown>>>();
+  (servicesResult.data ?? []).forEach((service) => {
+    const vendorId = service.vendorId as string;
+    const current = servicesByVendor.get(vendorId) ?? [];
+    current.push(service);
+    servicesByVendor.set(vendorId, current);
+  });
+
+  const reviewsByVendor = new Map<string, Array<Record<string, unknown>>>();
+  (reviewsResult.data ?? []).forEach((review) => {
+    const vendorId = (review as Record<string, unknown>).vendorId as string;
+    const current = reviewsByVendor.get(vendorId) ?? [];
+    current.push(review);
+    reviewsByVendor.set(vendorId, current);
+  });
+
+  const normalizedSearch = normalize(search);
+  const normalizedLocation = normalize(location);
+  const maxBudget = budget ?? maxPrice;
+  const effectiveMinPrice = minPrice;
+  const effectiveMaxPrice = maxBudget ?? undefined;
+
+  const filtered = vendorList.filter((vendor) => {
+    const services = servicesByVendor.get(vendor.id) ?? [];
+    const reviews = reviewsByVendor.get(vendor.id) ?? [];
+
+    const matchesCategory = !category || services.some((service) => normalize(service.category as string).includes(normalize(category)));
+    const matchesSearch = !normalizedSearch || [
+      vendor.businessName,
+      vendor.ownerName,
+      vendor.city,
+      vendor.area,
+      vendor.address,
+      services.map((service) => service.serviceName).join(" "),
+      services.map((service) => service.description).join(" "),
+    ].some((value) => normalize(value as string).includes(normalizedSearch));
+    const matchesLocation = !normalizedLocation || [vendor.city, vendor.area, vendor.address].some((value) => normalize(value as string).includes(normalizedLocation));
+
+    const servicePrices = services
+      .map((service) => Number(service.price))
+      .filter((price) => Number.isFinite(price));
+
+    const matchesBudget = !effectiveMinPrice && !effectiveMaxPrice || servicePrices.some((price) => {
+      const aboveMin = effectiveMinPrice === undefined || price >= effectiveMinPrice;
+      const belowMax = effectiveMaxPrice === undefined || price <= effectiveMaxPrice;
+      return aboveMin && belowMax;
+    });
+
+    return matchesCategory && matchesSearch && matchesLocation && matchesBudget;
+  }).map((vendor) => {
+    const services = servicesByVendor.get(vendor.id) ?? [];
+    const reviews = reviewsByVendor.get(vendor.id) ?? [];
+    const reviewCount = reviews.length;
+    const averageRating = reviewCount > 0 ? reviews.reduce((sum, review) => sum + Number(review.rating ?? 0), 0) / reviewCount : 0;
+    const minPriceValue = services.length > 0 ? Math.min(...services.map((service) => Number(service.price)).filter((price) => Number.isFinite(price))) : 0;
+    const maxPriceValue = services.length > 0 ? Math.max(...services.map((service) => Number(service.price)).filter((price) => Number.isFinite(price))) : 0;
+
+    return {
+      ...vendor,
+      services,
+      reviews,
+      reviewCount,
+      averageRating: Number(averageRating.toFixed(1)),
+      minPrice: minPriceValue,
+      maxPrice: maxPriceValue,
+      serviceCount: services.length,
+      popularity: reviewCount + services.length,
+    };
+  });
+
+  const sortMode = normalize(sortBy);
+  const sorted = [...filtered].sort((left, right) => {
+    switch (sortMode) {
+      case "rating":
+        return (right.averageRating ?? 0) - (left.averageRating ?? 0);
+      case "price_low_to_high":
+        return (left.minPrice ?? 0) - (right.minPrice ?? 0);
+      case "price_high_to_low":
+        return (right.minPrice ?? 0) - (left.minPrice ?? 0);
+      case "popularity":
+        return (right.popularity ?? 0) - (left.popularity ?? 0);
+      case "newest":
+      default:
+        return new Date(right.createdAt as string).getTime() - new Date(left.createdAt as string).getTime();
+    }
+  });
+
+  return sorted;
 };
 
 export const getPublicVendorDetail = async (vendorId: string) => {

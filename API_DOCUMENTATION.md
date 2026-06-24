@@ -210,7 +210,88 @@ All vendor endpoints require `Authorization: Bearer <vendor_jwt_token>`
 
 ---
 
-### 4. List Services
+### 4. List Public Vendors
+**Endpoint:** `GET /vendors`
+
+**Description:** Return public vendor listings for the frontend with optional filtering, search, location filtering, budget filtering, and sorting.
+
+**Query Parameters:**
+- `category` – filter vendors by service category, example: `Banquet Hall`
+- `search` – search by business name, owner, city, area, service name, or description
+- `location` – filter by city, area, or address
+- `budget` – maximum price filter (alias for `maxPrice`)
+- `minPrice` – minimum service price
+- `maxPrice` – maximum service price
+- `sortBy` – one of `newest`, `popularity`, `rating`, `price_low_to_high`, `price_high_to_low`
+
+**Example Requests:**
+```http
+GET /vendors?category=Banquet%20Hall
+GET /vendors?search=Wedding
+GET /vendors?location=Delhi
+GET /vendors?minPrice=1000&maxPrice=5000
+GET /vendors?sortBy=rating
+GET /vendors?category=Banquet%20Hall&location=Delhi&budget=5000&sortBy=price_low_to_high
+```
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": "vendor-123",
+    "businessName": "ABC Wedding Hall",
+    "ownerName": "Ali Khan",
+    "city": "Delhi",
+    "area": "Connaught Place",
+    "status": "APPROVED",
+    "services": [
+      {
+        "id": "service-1",
+        "category": "Banquet Hall",
+        "serviceName": "Luxury Hall",
+        "price": 5000
+      }
+    ],
+    "reviews": [
+      {
+        "id": "review-1",
+        "userName": "Arjun",
+        "rating": 5,
+        "comment": "Excellent"
+      }
+    ],
+    "reviewCount": 1,
+    "averageRating": 5,
+    "minPrice": 5000,
+    "maxPrice": 5000,
+    "serviceCount": 1,
+    "popularity": 2
+  }
+]
+```
+
+---
+
+### 5. Get Vendor Detail
+**Endpoint:** `GET /vendors/{vendorId}`
+
+**Description:** Return a specific vendor with profile, services, and reviews together.
+
+**Response (200 OK):**
+```json
+{
+  "vendor": {
+    "id": "vendor-123",
+    "businessName": "ABC Wedding Hall"
+  },
+  "services": [],
+  "reviews": []
+}
+```
+
+---
+
+### 6. List Services
 **Endpoint:** `GET /vendor/services`
 
 **Query Parameters:**
