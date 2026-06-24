@@ -35,6 +35,27 @@ type PublicVendorFilters = {
 
 const normalize = (value?: string) => value?.trim().toLowerCase() ?? "";
 
+export const buildReviewSummary = (reviews: Array<Record<string, unknown>>) => {
+  const reviewCount = reviews.length;
+  const averageRating = reviewCount > 0
+    ? reviews.reduce((sum, review) => sum + Number(review.rating ?? 0), 0) / reviewCount
+    : 0;
+
+  const ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  reviews.forEach((review) => {
+    const ratingValue = Number(review.rating ?? 0);
+    if (ratingValue >= 1 && ratingValue <= 5) {
+      ratingBreakdown[ratingValue as keyof typeof ratingBreakdown] += 1;
+    }
+  });
+
+  return {
+    averageRating: Number(averageRating.toFixed(1)),
+    reviewCount,
+    ratingBreakdown,
+  };
+};
+
 export const listPublicVendors = async (filters: PublicVendorFilters = {}) => {
   const { category, search, location, budget, minPrice, maxPrice, sortBy } = filters;
 
@@ -129,8 +150,7 @@ export const listPublicVendors = async (filters: PublicVendorFilters = {}) => {
   }).map((vendor) => {
     const services = servicesByVendor.get(vendor.id) ?? [];
     const reviews = reviewsByVendor.get(vendor.id) ?? [];
-    const reviewCount = reviews.length;
-    const averageRating = reviewCount > 0 ? reviews.reduce((sum, review) => sum + Number(review.rating ?? 0), 0) / reviewCount : 0;
+    const reviewSummary = buildReviewSummary(reviews as Array<Record<string, unknown>>);
     const minPriceValue = services.length > 0 ? Math.min(...services.map((service) => Number(service.price)).filter((price) => Number.isFinite(price))) : 0;
     const maxPriceValue = services.length > 0 ? Math.max(...services.map((service) => Number(service.price)).filter((price) => Number.isFinite(price))) : 0;
 
@@ -138,12 +158,13 @@ export const listPublicVendors = async (filters: PublicVendorFilters = {}) => {
       ...vendor,
       services,
       reviews,
-      reviewCount,
-      averageRating: Number(averageRating.toFixed(1)),
+      reviewCount: reviewSummary.reviewCount,
+      averageRating: reviewSummary.averageRating,
+      ratingBreakdown: reviewSummary.ratingBreakdown,
       minPrice: minPriceValue,
       maxPrice: maxPriceValue,
       serviceCount: services.length,
-      popularity: reviewCount + services.length,
+      popularity: reviewSummary.reviewCount + services.length,
     };
   });
 
@@ -180,8 +201,16 @@ export const getPublicVendorDetail = async (vendorId: string) => {
 
   if (!vendorResult.data) throw new AppError("Vendor not found", 404);
 
+  const reviewSummary = buildReviewSummary((reviewsResult.data ?? []) as Array<Record<string, unknown>>);
+
   return {
-    vendor: vendorResult.data,
+    vendor: {
+      ...vendorResult.data,
+      reviewSummary,
+      reviewCount: reviewSummary.reviewCount,
+      averageRating: reviewSummary.averageRating,
+      ratingBreakdown: reviewSummary.ratingBreakdown,
+    },
     services: servicesResult.data ?? [],
     reviews: reviewsResult.data ?? [],
   };

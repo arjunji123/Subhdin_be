@@ -262,6 +262,13 @@ GET /vendors?category=Banquet%20Hall&location=Delhi&budget=5000&sortBy=price_low
     ],
     "reviewCount": 1,
     "averageRating": 5,
+    "ratingBreakdown": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
     "minPrice": 5000,
     "maxPrice": 5000,
     "serviceCount": 1,
@@ -282,7 +289,16 @@ GET /vendors?category=Banquet%20Hall&location=Delhi&budget=5000&sortBy=price_low
 {
   "vendor": {
     "id": "vendor-123",
-    "businessName": "ABC Wedding Hall"
+    "businessName": "ABC Wedding Hall",
+    "reviewCount": 0,
+    "averageRating": 0,
+    "ratingBreakdown": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0
+    }
   },
   "services": [],
   "reviews": []
@@ -524,9 +540,12 @@ GET /vendors?category=Banquet%20Hall&location=Delhi&budget=5000&sortBy=price_low
 ### 13. Create Review
 **Endpoint:** `POST /vendor/reviews`
 
+**Auth:** Any authenticated user or vendor token
+
 **Request Body:**
 ```json
 {
+  "vendorId": "vendor-001",
   "rating": 5,
   "comment": "Amazing service! Very professional team.",
   "userName": "Ahmed Hassan"  // optional, defaults to "Anonymous"

@@ -105,6 +105,7 @@ export const offerCreateSchema = z.object({
 export const offerUpdateSchema = offerCreateSchema.partial();
 
 export const reviewSchema = z.object({
+  vendorId: z.string().min(1).optional(),
   rating: z.number().int().min(1).max(5),
   comment: z.string().min(1).max(1000),
 });

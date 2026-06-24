@@ -5,15 +5,27 @@ import { AppError } from "../../utils/app-error.js";
 import { createReview, listReviews } from "./reviews.service.js";
 
 const getVendorId = (req: Request): string => {
-  const vendorId = req.auth?.vendorId;
+  const vendorId = typeof req.body?.vendorId === "string" && req.body.vendorId.trim()
+    ? req.body.vendorId
+    : req.auth?.vendorId;
+
   if (!vendorId) {
-    throw new AppError("Vendor authentication required", 401);
+    throw new AppError("Vendor ID is required", 400);
   }
+
   return vendorId;
 };
 
 export const listReviewsHandler = async (req: Request, res: Response) => {
-  const reviews = await listReviews(getVendorId(req));
+  const requestedVendorId = typeof req.query?.vendorId === "string" && req.query.vendorId.trim()
+    ? req.query.vendorId
+    : req.auth?.vendorId;
+
+  if (!requestedVendorId) {
+    throw new AppError("Vendor ID is required", 400);
+  }
+
+  const reviews = await listReviews(requestedVendorId);
   return res.status(200).json(reviews);
 };
 
