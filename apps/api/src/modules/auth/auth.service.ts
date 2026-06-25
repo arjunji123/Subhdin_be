@@ -155,30 +155,28 @@ export const verifyOtp = async ({ phone, code, role, ...profile }: VerifyOtpInpu
   const vendor = await findVendorByPhone(phone);
   const user = await findUserByPhone(phone);
 
+  // Determine effective role
   let selectedRole = role;
-  if (!selectedRole) {
-    if (vendor && !user) {
-      selectedRole = "vendor";
-    } else if (user && !vendor) {
-      selectedRole = "user";
-    } else if (vendor && user) {
-      throw new AppError("Multiple accounts found for this phone. Please specify role.", 400);
+
+  const existsAsVendor = Boolean(vendor);
+  const existsAsUser = Boolean(user);
+  const alreadyRegistered = existsAsVendor || existsAsUser;
+
+  if (alreadyRegistered) {
+    // ── LOGIN flow ── (number already in DB)
+    if (existsAsVendor && existsAsUser) {
+      // Exists in both – use provided role, else ask to specify
+      if (!selectedRole) {
+        throw new AppError("Multiple accounts found for this phone. Please specify role.", 400);
+      }
     } else {
-      throw new AppError("Role is required for new registration", 400);
+      // Exists in exactly one table – auto-detect, CLIENT ROLE IGNORED
+      selectedRole = existsAsVendor ? "vendor" : "user";
     }
   } else {
-    // Role explicitly provided – prevent cross-registration
-    if (selectedRole === "vendor" && !vendor && user) {
-      throw new AppError(
-        "This phone number is already registered as a user. Cannot register as vendor.",
-        409,
-      );
-    }
-    if (selectedRole === "user" && !user && vendor) {
-      throw new AppError(
-        "This phone number is already registered as a vendor. Cannot register as user.",
-        409,
-      );
+    // ── SIGNUP flow ── (new number)
+    if (!selectedRole) {
+      throw new AppError("Role is required for new registration", 400);
     }
   }
 
