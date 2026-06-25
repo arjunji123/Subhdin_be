@@ -19,6 +19,7 @@ import {
   getVendorMe,
   listOffers,
   listPublicOffers,
+  listPublicVendorOffers,
   listPublicVendors,
   listServices,
   listVendorServices,
@@ -142,6 +143,12 @@ export const deleteOfferHandler = async (req: Request, res: Response) => {
 
 export const listPublicOffersHandler = async (_req: Request, res: Response) => {
   const offers = await listPublicOffers();
+  return res.status(200).json(offers);
+};
+
+export const listVendorOffersHandler = async (req: Request, res: Response) => {
+  const vendorId = requiredParam(req.params.vendorId, "vendorId");
+  const offers = await listPublicVendorOffers(vendorId);
   return res.status(200).json(offers);
 };
 

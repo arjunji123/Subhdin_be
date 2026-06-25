@@ -424,6 +424,18 @@ export const listPublicOffers = async () => {
   return offers ?? [];
 };
 
+export const listPublicVendorOffers = async (vendorId: string) => {
+  const { data, error } = await supabase
+    .from("Offer")
+    .select("*")
+    .eq("vendorId", vendorId)
+    .eq("isActive", true)
+    .order("createdAt", { ascending: false });
+
+  assertSupabase(data, error, "Failed to fetch public vendor offers");
+  return data ?? [];
+};
+
 export const getDashboard = async (vendorId: string) => {
   const [
     serviceResult,

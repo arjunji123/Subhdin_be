@@ -15,6 +15,7 @@ import {
   listPublicOffersHandler,
   listPublicVendorsHandler,
   listServicesHandler,
+  listVendorOffersHandler,
   listVendorServicesHandler,
   updateOfferHandler,
   updateServiceHandler,
@@ -41,6 +42,7 @@ vendorPublicRouter.get("/", asyncHandler(listPublicVendorsHandler));
 vendorPublicRouter.get("/offers", asyncHandler(listPublicOffersHandler));
 vendorPublicRouter.get("/:vendorId", asyncHandler(getPublicVendorDetailHandler));
 vendorPublicRouter.get("/:vendorId/services", asyncHandler(listVendorServicesHandler));
+vendorPublicRouter.get("/:vendorId/offers", asyncHandler(listVendorOffersHandler));
 
 vendorRouter.get("/offers", asyncHandler(listOffersHandler));
 vendorRouter.post("/offers", asyncHandler(createOfferHandler));
