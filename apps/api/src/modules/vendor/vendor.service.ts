@@ -413,7 +413,6 @@ export const listPublicOffers = async () => {
         mobileNumber,
         email,
         businessImages,
-        category,
         status
       )
     `)
