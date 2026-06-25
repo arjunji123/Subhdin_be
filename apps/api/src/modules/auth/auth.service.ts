@@ -157,12 +157,28 @@ export const verifyOtp = async ({ phone, code, role, ...profile }: VerifyOtpInpu
 
   let selectedRole = role;
   if (!selectedRole) {
-    if (vendor && !user) selectedRole = "vendor";
-    else if (user && !vendor) selectedRole = "user";
-    else if (vendor && user) {
+    if (vendor && !user) {
+      selectedRole = "vendor";
+    } else if (user && !vendor) {
+      selectedRole = "user";
+    } else if (vendor && user) {
       throw new AppError("Multiple accounts found for this phone. Please specify role.", 400);
     } else {
       throw new AppError("Role is required for new registration", 400);
+    }
+  } else {
+    // Role explicitly provided – prevent cross-registration
+    if (selectedRole === "vendor" && !vendor && user) {
+      throw new AppError(
+        "This phone number is already registered as a user. Cannot register as vendor.",
+        409,
+      );
+    }
+    if (selectedRole === "user" && !user && vendor) {
+      throw new AppError(
+        "This phone number is already registered as a vendor. Cannot register as user.",
+        409,
+      );
     }
   }
 
