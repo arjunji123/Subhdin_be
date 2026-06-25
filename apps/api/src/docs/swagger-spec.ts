@@ -30,7 +30,48 @@ export const swaggerSpec = {
       patch: { tags: ["Vendor"], summary: "Update service", security: [{ bearerAuth: [] }], parameters: [{ name: "serviceId", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "OK" } } },
       delete: { tags: ["Vendor"], summary: "Delete service", security: [{ bearerAuth: [] }], parameters: [{ name: "serviceId", in: "path", required: true, schema: { type: "string" } }], responses: { 200: { description: "OK" } } },
     },
-    "/vendor/offers": {
+    "/vendors/offers": {
+    get: {
+      tags: ["Vendor"],
+      summary: "List all active offers with vendor details (public)",
+      responses: {
+        200: {
+          description: "Array of active offers with nested vendor data",
+          content: {
+            "application/json": {
+              schema: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    vendorId: { type: "string" },
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    discountPercent: { type: "number" },
+                    startDate: { type: "string" },
+                    endDate: { type: "string" },
+                    isActive: { type: "boolean" },
+                    vendor: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string" },
+                        businessName: { type: "string" },
+                        ownerName: { type: "string" },
+                        city: { type: "string" },
+                        area: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  "/vendor/offers": {
       get: { tags: ["Vendor"], summary: "List offers", security: [{ bearerAuth: [] }], responses: { 200: { description: "OK" } } },
       post: { tags: ["Vendor"], summary: "Create offer", security: [{ bearerAuth: [] }], responses: { 201: { description: "Created" } } },
     },

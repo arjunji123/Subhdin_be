@@ -18,6 +18,7 @@ import {
   getPublicVendorDetail,
   getVendorMe,
   listOffers,
+  listPublicOffers,
   listPublicVendors,
   listServices,
   listVendorServices,
@@ -137,6 +138,11 @@ export const deleteOfferHandler = async (req: Request, res: Response) => {
   const offerId = requiredParam(req.params.offerId, "offerId");
   const result = await deleteOffer(getVendorId(req), offerId);
   return res.status(200).json(result);
+};
+
+export const listPublicOffersHandler = async (_req: Request, res: Response) => {
+  const offers = await listPublicOffers();
+  return res.status(200).json(offers);
 };
 
 export const dashboardHandler = async (req: Request, res: Response) => {

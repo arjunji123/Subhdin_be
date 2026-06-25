@@ -396,6 +396,34 @@ export const deleteOffer = async (vendorId: string, offerId: string) => {
   return { message: "Offer deleted successfully" };
 };
 
+// ============ PUBLIC OFFERS ============
+export const listPublicOffers = async () => {
+  // Fetch active offers with vendor details via join
+  const { data: offers, error } = await supabase
+    .from("Offer")
+    .select(`
+      *,
+      vendor:Vendor!inner (
+        id,
+        businessName,
+        ownerName,
+        city,
+        area,
+        address,
+        mobileNumber,
+        email,
+        businessImages,
+        category,
+        status
+      )
+    `)
+    .eq("isActive", true)
+    .order("createdAt", { ascending: false });
+
+  assertSupabase(offers, error, "Failed to fetch public offers");
+  return offers ?? [];
+};
+
 export const getDashboard = async (vendorId: string) => {
   const [
     serviceResult,
